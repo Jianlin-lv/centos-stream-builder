@@ -1,0 +1,32 @@
+diff -Naur linux-6.12.0-218.el10.orig/drivers/nvme/host/pci.c linux-6.12.0-218.el10/drivers/nvme/host/pci.c
+--- linux-6.12.0-218.el10.orig/drivers/nvme/host/pci.c	2026-04-17 05:28:54.563313526 +0000
++++ linux-6.12.0-218.el10/drivers/nvme/host/pci.c	2026-04-17 05:31:04.706212240 +0000
+@@ -3693,6 +3693,7 @@
+ 	struct nvme_dev *dev;
+ 	int result = -ENOMEM;
+ 
++	printk(KERN_ALERT "NVME: Using PROBE_FORCE_SYNCHRONOUS mode - Custom kernel modification\n");
+ 	dev = nvme_pci_alloc_dev(pdev, id);
+ 	if (IS_ERR(dev))
+ 		return PTR_ERR(dev);
+@@ -4236,7 +4237,7 @@
+ 	.remove		= nvme_remove,
+ 	.shutdown	= nvme_shutdown,
+ 	.driver		= {
+-		.probe_type	= PROBE_PREFER_ASYNCHRONOUS,
++		.probe_type	= PROBE_FORCE_SYNCHRONOUS,
+ #ifdef CONFIG_PM_SLEEP
+ 		.pm		= &nvme_dev_pm_ops,
+ #endif
+diff -Naur linux-6.12.0-218.el10.orig/drivers/scsi/sd.c linux-6.12.0-218.el10/drivers/scsi/sd.c
+--- linux-6.12.0-218.el10.orig/drivers/scsi/sd.c	2026-04-17 05:28:56.286174526 +0000
++++ linux-6.12.0-218.el10/drivers/scsi/sd.c	2026-04-17 05:32:10.053824500 +0000
+@@ -4345,7 +4345,7 @@
+ 	.gendrv = {
+ 		.name		= "sd",
+ 		.probe		= sd_probe,
+-		.probe_type	= PROBE_PREFER_ASYNCHRONOUS,
++		.probe_type	= PROBE_FORCE_SYNCHRONOUS,
+ 		.remove		= sd_remove,
+ 		.shutdown	= sd_shutdown,
+ 		.pm		= &sd_pm_ops,

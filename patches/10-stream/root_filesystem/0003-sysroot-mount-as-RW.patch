@@ -1,0 +1,40 @@
+From 731eef211e1304aa1f1af7f446e46957d19494ec Mon Sep 17 00:00:00 2001
+From: Jianlin Lv <iecedge@gmail.com>
+Date: Wed, 4 Feb 2026 00:00:45 -0700
+Subject: [PATCH 3/6]  /sysroot mount as RW
+
+The OSTree configuration sysroot.readonly=true tells OSTree that when the system boots,
+the root filesystem should be mounted read-only.
+
+this patch change sysroot.readonly value to false.
+
+Signed-off-by: Jianlin Lv <iecedge@gmail.com>
+---
+ .../modules/payloads/payload/rpm_ostree/installation.py       | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/payloads/payload/rpm_ostree/installation.py b/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/payloads/payload/rpm_ostree/installation.py
+index 96c8635c..f6df42d0 100644
+--- a/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/payloads/payload/rpm_ostree/installation.py
++++ b/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/payloads/payload/rpm_ostree/installation.py
+@@ -956,7 +956,7 @@ class DeployOSTreeTask(Task):
+                  self._data.remote + ':' + ref]
+             )
+ 
+-        log.info("ostree config set sysroot.readonly true")
++        log.info("ostree config set sysroot.readonly false")
+ 
+         safe_exec_program(
+             "ostree",
+@@ -964,7 +964,7 @@ class DeployOSTreeTask(Task):
+              "--repo=" + self._physroot + "/ostree/repo",
+              "set",
+              "sysroot.readonly",
+-             "true"]
++             "false"]
+         )
+ 
+         log.info("ostree admin deploy complete")
+-- 
+2.43.0
+

@@ -1,0 +1,83 @@
+From 6c5f41e1a5a8366bd22d2cd381fee7a4b344fc95 Mon Sep 17 00:00:00 2001
+From: Jianlin Lv <iecedge@gmail.com>
+Date: Wed, 4 Feb 2026 00:49:31 -0700
+Subject: [PATCH 5/6] Fix efi node provision failed
+
+1. Checking for command availability: Using shutil.which("gen_grub_cfgstub") to detect if the command exists (CentOS/RHEL specific)
+2. Fallback implementation: When the command doesn't exist (Ubuntu/Debian systems), manually creating the EFI configuration stub with:
+    - EFI config directory creation
+    - Boot partition UUID detection with fallback search
+    - GRUB configuration stub generation with proper search and prefix settings
+    - Error handling with appropriate BootLoaderError exceptions
+
+Signed-off-by: Jianlin Lv <iecedge@gmail.com>
+---
+ .../modules/storage/bootloader/efi.py         | 51 ++++++++++++++++---
+ 1 file changed, 44 insertions(+), 7 deletions(-)
+
+diff --git a/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/storage/bootloader/efi.py b/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/storage/bootloader/efi.py
+index 8e4a152a..196a5a8b 100644
+--- a/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/storage/bootloader/efi.py
++++ b/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/storage/bootloader/efi.py
+@@ -178,14 +178,51 @@ class EFIGRUB(EFIBase, GRUB2):
+         return "%s/%s" % (self.efi_config_dir, self._config_file)
+ 
+     def write_config(self):
+-        rc = util.execWithRedirect(
+-            "gen_grub_cfgstub",
+-            [self.config_dir, self.efi_config_dir],
+-            root=conf.target.system_root,
+-        )
++        import shutil
++
++        # Check if gen_grub_cfgstub exists (CentOS/RHEL specific)
++        if shutil.which("gen_grub_cfgstub"):
++            rc = util.execWithRedirect(
++                "gen_grub_cfgstub",
++                [self.config_dir, self.efi_config_dir],
++                root=conf.target.system_root,
++            )
++
++            if rc != 0:
++                raise BootLoaderError("gen_grub_cfgstub script failed")
++        else:
++            # Create the EFI stub configuration manually when gen_grub_cfgstub is not available
++            log.info("gen_grub_cfgstub not found, creating EFI config stub manually")
+ 
+-        if rc != 0:
+-            raise BootLoaderError("gen_grub_cfgstub script failed")
++            # Create the EFI config directory if it doesn't exist
++            efi_config_path = join_paths(conf.target.system_root, self.efi_config_dir)
++            os.makedirs(efi_config_path, exist_ok=True)
++
++            # Get the boot partition UUID
++            boot_uuid = self.stage2_device.format.uuid
++            if not boot_uuid:
++                log.warning("Boot partition UUID not found, using fallback search")
++                search_line = "search --no-floppy --set=dev --file /grub2/grub.cfg"
++            else:
++                search_line = f"search --no-floppy --fs-uuid --set=dev {boot_uuid}"
++
++            # Create a simple GRUB configuration stub for EFI
++            efi_grub_cfg = join_paths(efi_config_path, "grub.cfg")
++
++            # Get the relative path from /boot to the grub config directory
++            config_dir_rel = os.path.relpath(self.config_dir, "/boot")
++
++            stub_content = f"""{search_line}
++set prefix=($dev)/{config_dir_rel}
++configfile $prefix/grub.cfg
++"""
++
++            try:
++                with open(efi_grub_cfg, 'w') as f:
++                    f.write(stub_content)
++                log.info("Created EFI GRUB configuration stub at %s", efi_grub_cfg)
++            except OSError as e:
++                raise BootLoaderError(f"Failed to create EFI GRUB config stub: {e}")
+ 
+         super().write_config()
+ 
+-- 
+2.43.0
+

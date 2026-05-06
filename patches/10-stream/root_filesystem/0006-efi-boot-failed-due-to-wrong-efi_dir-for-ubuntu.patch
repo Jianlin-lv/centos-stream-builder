@@ -1,0 +1,31 @@
+From c8c4e66087879d09c4c83d255b3f508b38aa9244 Mon Sep 17 00:00:00 2001
+From: Jianlin Lv <iecedge@gmail.com>
+Date: Wed, 4 Feb 2026 00:53:58 -0700
+Subject: [PATCH 6/6] efi boot failed due to wrong efi_dir for ubuntu
+
+the function create the grub.cfg in /boot/efi/EFI/centos
+our postinstall expect it in redhat path.
+
+Update efi_dir = centos to efi_dir = redhat in /etc/anaconda//profile.d/centos.conf
+
+Signed-off-by: Jianlin Lv <iecedge@gmail.com>
+---
+ squashfs-root/etc/anaconda/profile.d/centos.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/squashfs-root/etc/anaconda/profile.d/centos.conf b/squashfs-root/etc/anaconda/profile.d/centos.conf
+index 5586944d..70c07378 100644
+--- a/squashfs-root/etc/anaconda/profile.d/centos.conf
++++ b/squashfs-root/etc/anaconda/profile.d/centos.conf
+@@ -14,7 +14,7 @@ forbidden_modules =
+     org.fedoraproject.Anaconda.Modules.Subscription
+ 
+ [Bootloader]
+-efi_dir = centos
++efi_dir = redhat
+ menu_auto_hide = False
+ 
+ [Payload]
+-- 
+2.43.0
+

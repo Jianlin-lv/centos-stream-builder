@@ -1,0 +1,21 @@
+--- SPECS/kernel.spec.org	2026-04-24 01:37:11.402676554 +0000
++++ SPECS/kernel.spec	2026-04-24 01:38:13.237089055 +0000
+@@ -1126,6 +1126,9 @@
+ Patch1: patch-%{patchversion}-redhat.patch
+ %endif
+
++# Custom patch for disk order fix
++Patch1000: fix-disk-order.patch
++
+ # empty final patch to facilitate testing of kernel patches
+ Patch999999: linux-kernel-test.patch
+
+@@ -1976,6 +1979,8 @@
+ ApplyOptionalPatch patch-%{patchversion}-redhat.patch
+ %endif
+
++ApplyOptionalPatch fix-disk-order.patch
++
+ ApplyOptionalPatch linux-kernel-test.patch
+
+ %{log_msg "End of patch applications"}

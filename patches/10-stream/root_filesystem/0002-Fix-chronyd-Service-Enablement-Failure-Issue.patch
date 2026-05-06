@@ -1,0 +1,32 @@
+From 34ca0a07cbc323f25c083ec75c3f35e2c040644c Mon Sep 17 00:00:00 2001
+From: Jianlin Lv <iecedge@gmail.com>
+Date: Tue, 3 Feb 2026 23:54:43 -0700
+Subject: [PATCH 2/6] Fix chronyd Service Enablement Failure Issue
+
+Solution: Skip Service Enablement for OSTree deployment
+
+Signed-off-by: Jianlin Lv <iecedge@gmail.com>
+---
+ .../pyanaconda/modules/timezone/installation.py             | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/timezone/installation.py b/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/timezone/installation.py
+index 01d7ef11..f76c6fdd 100644
+--- a/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/timezone/installation.py
++++ b/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/timezone/installation.py
+@@ -182,6 +182,12 @@ class ConfigureNTPTask(Task):
+             log.debug("The NTP service is not installed.")
+             return
+ 
++        # Check if this is an OSTree deployment
++        ostree_deployment_path = os.path.join(self._sysroot, "ostree")
++        if os.path.exists(ostree_deployment_path):
++            log.debug("OSTree deployment detected, skipping service enablement")
++            return
++
+         if self._ntp_enabled:
+             service.enable_service(NTP_SERVICE, root=self._sysroot)
+         else:
+-- 
+2.43.0
+

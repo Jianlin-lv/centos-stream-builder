@@ -1,0 +1,52 @@
+From feaad332bb4a950cc0e60946e8ef3f7ede0f6f2b Mon Sep 17 00:00:00 2001
+From: Jianlin Lv <iecedge@gmail.com>
+Date: Tue, 3 Feb 2026 23:49:16 -0700
+Subject: [PATCH 1/6] Fix GRUB Configuration Generation Failure
+
+CentOS 10 defaults menu_auto_hide = True, requiring grub2-editenv tool
+Ubuntu OSTree image lacks grub2-editenv binary
+Solution:
+1. Modify /etc/anaconda/profile.d/centos.conf,config menu_auto_hide = False
+2. remove Lines 347-354 of grub2.py
+
+Signed-off-by: Jianlin Lv <iecedge@gmail.com>
+---
+ squashfs-root/etc/anaconda/profile.d/centos.conf          | 2 +-
+ .../pyanaconda/modules/storage/bootloader/grub2.py        | 8 --------
+ 2 files changed, 1 insertion(+), 9 deletions(-)
+
+diff --git a/squashfs-root/etc/anaconda/profile.d/centos.conf b/squashfs-root/etc/anaconda/profile.d/centos.conf
+index 601a6942..5586944d 100644
+--- a/squashfs-root/etc/anaconda/profile.d/centos.conf
++++ b/squashfs-root/etc/anaconda/profile.d/centos.conf
+@@ -15,7 +15,7 @@ forbidden_modules =
+ 
+ [Bootloader]
+ efi_dir = centos
+-menu_auto_hide = True
++menu_auto_hide = False
+ 
+ [Payload]
+ enable_closest_mirror = True
+diff --git a/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/storage/bootloader/grub2.py b/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/storage/bootloader/grub2.py
+index 0c556e91..92bb9cdc 100644
+--- a/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/storage/bootloader/grub2.py
++++ b/squashfs-root/usr/lib64/python3.12/site-packages/pyanaconda/modules/storage/bootloader/grub2.py
+@@ -344,14 +344,6 @@ class GRUB2(BootLoader):
+ 
+         # set menu_auto_hide grubenv variable if we should enable menu_auto_hide
+         # set boot_success so that the menu is hidden on the boot after install
+-        if conf.bootloader.menu_auto_hide:
+-            rc = util.execWithRedirect(
+-                "grub2-editenv",
+-                ["-", "set", "menu_auto_hide=1", "boot_success=1"],
+-                root=conf.target.system_root
+-            )
+-            if rc:
+-                log.error("failed to set menu_auto_hide=1")
+ 
+         # now tell grub2 to generate the main configuration file
+         rc = util.execWithRedirect(
+-- 
+2.43.0
+
